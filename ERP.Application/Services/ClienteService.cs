@@ -82,4 +82,9 @@ public class ClienteService : IClienteService
 
         await _repository.DeleteAsync(entity);
     }
+
+    public async Task<int> CountAsync()
+    {
+        return await _repository.CountAsync();
+    }
 }

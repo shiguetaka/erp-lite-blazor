@@ -19,7 +19,6 @@ public class ClientesController : ControllerBase
     public async Task<ActionResult<List<ClienteDto>>> Get()
     {
         var clientes = await _service.GetAllAsync();
-
         return Ok(clientes);
     }
 
@@ -38,7 +37,6 @@ public class ClientesController : ControllerBase
     public async Task<ActionResult<ClienteDto>> Create(ClienteDto cliente)
     {
         var result = await _service.CreateAsync(cliente);
-
         return Ok(result);
     }
 
@@ -46,7 +44,6 @@ public class ClientesController : ControllerBase
     public async Task<IActionResult> Update(ClienteDto cliente)
     {
         await _service.UpdateAsync(cliente);
-
         return NoContent();
     }
 
@@ -54,7 +51,13 @@ public class ClientesController : ControllerBase
     public async Task<IActionResult> Delete(Guid id)
     {
         await _service.DeleteAsync(id);
-
         return NoContent();
+    }
+
+    [HttpGet("count")]
+    public async Task<IActionResult> Count()
+    {
+        var total = await _service.CountAsync();
+        return Ok(total);
     }
 }
