@@ -31,4 +31,9 @@ public class ClienteApiService
     {
         await _http.DeleteAsync($"api/clientes/{id}");
     }
+
+    public async Task<int> CountAsync()
+    {
+        return await _http.GetFromJsonAsync<int>("api/clientes/count");
+    }
 }
