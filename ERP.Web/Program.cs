@@ -1,10 +1,18 @@
 using ERP.Web.Components;
+using ERP.Web.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
 builder.Services.AddRazorComponents()
     .AddInteractiveServerComponents();
+
+builder.Services.AddHttpClient("ERP.API", client =>
+{
+    client.BaseAddress = new Uri("http://localhost:5186/");
+});
+
+builder.Services.AddScoped<ClienteApiService>();
 
 var app = builder.Build();
 
