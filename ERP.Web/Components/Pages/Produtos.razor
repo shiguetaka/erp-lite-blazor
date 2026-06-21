@@ -1,0 +1,137 @@
+@page "/produtos"
+@rendermode InteractiveServer
+
+@using ERP.Application.DTOs
+@using ERP.Web.Services
+
+@inject ProdutoApiService ProdutoService
+
+<h3>Produtos</h3>
+
+<div class="mb-3">
+    <input class="form-control"
+           placeholder="Nome"
+           @bind="novoProduto.Nome" />
+</div>
+
+<div class="mb-3">
+    <input class="form-control"
+           placeholder="Descrição"
+           @bind="novoProduto.Descricao" />
+</div>
+
+<div class="mb-3">
+    <input class="form-control"
+           placeholder="Preço"
+           type="number"
+           @bind="novoProduto.Preco" />
+</div>
+
+<div class="mb-3">
+    <input class="form-control"
+           placeholder="Estoque"
+           type="number"
+           @bind="novoProduto.Estoque" />
+</div>
+
+<button class="btn btn-primary"
+        @onclick="Salvar">
+    @(editando ? "Salvar Alteração" : "Novo Produto")
+</button>
+
+@if (produtos == null)
+{
+    <p>Carregando...</p>
+}
+else
+{
+
+<table class="table mt-4">
+<thead>
+<tr>
+<th>Nome</th>
+<th>Descrição</th>
+<th>Preço</th>
+<th>Estoque</th>
+<th></th>
+</tr>
+</thead>
+<tbody>
+@foreach(var produto in produtos)
+{
+
+<tr>
+<td>@produto.Nome</td>
+<td>@produto.Descricao</td>
+<td>@produto.Preco</td>
+<td>@produto.Estoque</td>
+<td>
+
+<button class="btn btn-warning btn-sm me-2"
+        @onclick="() => Editar(produto)">
+Editar
+
+</button>
+<button class="btn btn-danger btn-sm"
+        @onclick="() => Excluir(produto.Id)">
+Excluir
+
+</button>
+</td>
+</tr>
+}
+</tbody>
+</table>
+}
+
+@code {
+private List<ProdutoDto>? produtos;
+private ProdutoDto novoProduto = new();
+private bool editando = false;
+
+protected override async Task OnInitializedAsync()
+{
+    await CarregarProdutos();
+}
+
+private async Task CarregarProdutos()
+{
+    produtos = await ProdutoService.GetProdutosAsync();
+}
+
+private async Task Salvar()
+{
+    if(editando)
+    {
+        await ProdutoService.UpdateAsync(novoProduto);
+    }
+    else
+    {
+        await ProdutoService.CreateAsync(novoProduto);
+    }
+
+    novoProduto = new();
+    editando = false;
+
+    await CarregarProdutos();
+}
+
+private void Editar(ProdutoDto produto)
+{
+    novoProduto = new ProdutoDto
+    {
+        Id = produto.Id,
+        Nome = produto.Nome,
+        Descricao = produto.Descricao,
+        Preco = produto.Preco,
+        Estoque = produto.Estoque
+    };
+    editando = true;
+}
+
+private async Task Excluir(Guid id)
+{
+    await ProdutoService.DeleteAsync(id);
+    await CarregarProdutos();
+}
+}

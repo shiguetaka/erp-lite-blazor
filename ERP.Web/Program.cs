@@ -13,6 +13,7 @@ builder.Services.AddHttpClient("ERP.API", client =>
 });
 
 builder.Services.AddScoped<ClienteApiService>();
+builder.Services.AddScoped<ProdutoApiService>();
 
 var app = builder.Build();
 

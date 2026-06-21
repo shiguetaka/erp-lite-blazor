@@ -1,6 +1,7 @@
 ﻿@page "/"
 @using ERP.Web.Services
 @inject ClienteApiService ClienteService
+@inject ProdutoApiService ProdutoService
 
 <h1>Dashboard</h1>
 
@@ -13,12 +14,12 @@
     
     <div class="card">
         <h3>Produtos</h3>
-        <p>0</p>
+        <p>@totalProdutos</p>
     </div>
 
     <div class="card">
         <h3>Vendas</h3>
-        <p>0</p>
+        <p>@totalVendas</p>
     </div>
     
 </div>
@@ -26,11 +27,12 @@
 @code {
 
     private int totalClientes;
-
+    private int totalProdutos;
+    private int totalVendas = 0;
 
     protected override async Task OnInitializedAsync()
     {
         totalClientes = await ClienteService.CountAsync();
+        totalProdutos = await ProdutoService.CountAsync();
     }
-
 }
