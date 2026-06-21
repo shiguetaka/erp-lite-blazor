@@ -1,4 +1,5 @@
 @page "/clientes"
+@rendermode InteractiveServer
 
 @using ERP.Application.DTOs
 @using ERP.Web.Services
@@ -7,38 +8,116 @@
 
 <h3>Clientes</h3>
 
+<div class="mb-3">
+    <input class="form-control" placeholder="Nome" @bind="novoCliente.Nome" />
+</div>
+
+<div class="mb-3">
+    <input class="form-control" placeholder="Email" @bind="novoCliente.Email" />
+</div>
+
+<div class="mb-3">
+    <input class="form-control" placeholder="Telefone" @bind="novoCliente.Telefone" />
+</div>
+
+<button class="btn btn-primary" @onclick="Salvar">
+    @(editando ? "Salvar Alteração" : "Novo Cliente")
+</button>
+
 @if (clientes == null)
 {
     <p>Carregando...</p>
 }
 else
 {
-    <table class="table">
-        <thead>
-            <tr>
-                <th>Nome</th>
-                <th>Email</th>
-                <th>Telefone</th>
-            </tr>
-        </thead>
-        <tbody>
-        @foreach(var cliente in clientes)
-        {
-            <tr>
-                <td>@cliente.Nome</td>
-                <td>@cliente.Email</td>
-                <td>@cliente.Telefone</td>
-            </tr>
-        }
-        </tbody>
-    </table>
+<table class="table mt-4">
+<thead>
+<tr>
+    <th>Nome</th>
+    <th>Email</th>
+    <th>Telefone</th>
+    <th></th>
+</tr>
+</thead>
+<tbody>
+
+@foreach(var cliente in clientes)
+{
+<tr>
+<td>
+    @cliente.Nome
+</td>
+<td>
+    @cliente.Email
+</td>
+<td>
+    @cliente.Telefone
+</td>
+<td>
+
+<button class="btn btn-warning btn-sm me-2"
+        @onclick="() => Editar(cliente)">
+    Editar
+</button>
+
+<button class="btn btn-danger btn-sm"
+        @onclick="() => Excluir(cliente.Id)">
+    Excluir
+</button>
+
+</td>
+</tr>
+}
+</tbody>
+</table>
 }
 
 @code {
     private List<ClienteDto>? clientes;
+    private ClienteDto novoCliente = new();
 
     protected override async Task OnInitializedAsync()
     {
+        await CarregarClientes();
+    }
+
+    private async Task CarregarClientes()
+    {
         clientes = await ClienteService.GetClientesAsync();
+    }
+
+    private async Task Salvar()
+    {
+        if (editando)
+        {
+            await ClienteService.UpdateAsync(novoCliente);
+        }
+        else
+        {
+            await ClienteService.CreateAsync(novoCliente);
+        }
+        novoCliente = new();
+        editando = false;
+        await CarregarClientes();
+    }
+
+    private bool editando = false;
+
+    private void Editar(ClienteDto cliente)
+    {
+        novoCliente = new ClienteDto
+        {
+            Id = cliente.Id,
+            Nome = cliente.Nome,
+            Email = cliente.Email,
+            Telefone = cliente.Telefone
+        };
+        editando = true;
+    }
+
+    private async Task Excluir(Guid id)
+    {
+        await ClienteService.DeleteAsync(id);
+        await CarregarClientes();
     }
 }
