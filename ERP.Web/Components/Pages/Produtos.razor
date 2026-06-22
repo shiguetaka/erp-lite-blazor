@@ -34,6 +34,13 @@
            @bind="novoProduto.Estoque" />
 </div>
 
+@if(!string.IsNullOrEmpty(mensagemErro))
+{
+    <div class="alert alert-danger">
+        @mensagemErro
+    </div>
+}
+
 <button class="btn btn-primary"
         @onclick="Salvar">
     @(editando ? "Salvar Alteração" : "Novo Produto")
@@ -85,53 +92,73 @@ Excluir
 }
 
 @code {
-private List<ProdutoDto>? produtos;
-private ProdutoDto novoProduto = new();
-private bool editando = false;
+    private List<ProdutoDto>? produtos;
+    private ProdutoDto novoProduto = new();
+    private bool editando = false;
+    private string mensagemErro = "";
 
-protected override async Task OnInitializedAsync()
-{
-    await CarregarProdutos();
-}
-
-private async Task CarregarProdutos()
-{
-    produtos = await ProdutoService.GetProdutosAsync();
-}
-
-private async Task Salvar()
-{
-    if(editando)
+    protected override async Task OnInitializedAsync()
     {
-        await ProdutoService.UpdateAsync(novoProduto);
-    }
-    else
-    {
-        await ProdutoService.CreateAsync(novoProduto);
+        await CarregarProdutos();
     }
 
-    novoProduto = new();
-    editando = false;
-
-    await CarregarProdutos();
-}
-
-private void Editar(ProdutoDto produto)
-{
-    novoProduto = new ProdutoDto
+    private async Task CarregarProdutos()
     {
-        Id = produto.Id,
-        Nome = produto.Nome,
-        Descricao = produto.Descricao,
-        Preco = produto.Preco,
-        Estoque = produto.Estoque
-    };
-    editando = true;
-}
+        produtos = await ProdutoService.GetProdutosAsync();
+    }
 
-private async Task Excluir(Guid id)
-{
-    await ProdutoService.DeleteAsync(id);
-    await CarregarProdutos();
-}
+    private async Task Salvar()
+    {
+        mensagemErro = "";
+
+        if(string.IsNullOrWhiteSpace(novoProduto.Nome))
+        {
+            mensagemErro = "O nome do produto é obrigatório.";
+            return;
+        }
+
+        if(novoProduto.Preco == null || novoProduto.Preco <= 0)
+        {
+            mensagemErro = "O preço deve ser maior que zero.";
+            return;
+        }
+
+        if(novoProduto.Estoque == null || novoProduto.Estoque < 0)
+        {
+            mensagemErro = "O estoque não pode ser negativo.";
+            return;
+        }
+
+        if(editando)
+        {
+            await ProdutoService.UpdateAsync(novoProduto);
+        }
+        else
+        {
+            await ProdutoService.CreateAsync(novoProduto);
+        }
+
+        novoProduto = new();
+        editando = false;
+
+        await CarregarProdutos();
+    }
+    private void Editar(ProdutoDto produto)
+    {
+        novoProduto = new ProdutoDto
+        {
+            Id = produto.Id,
+            Nome = produto.Nome,
+            Descricao = produto.Descricao,
+            Preco = produto.Preco,
+            Estoque = produto.Estoque
+        };
+        editando = true;
+    }
+
+    private async Task Excluir(Guid id)
+    {
+        await ProdutoService.DeleteAsync(id);
+        await CarregarProdutos();
+    }
 }

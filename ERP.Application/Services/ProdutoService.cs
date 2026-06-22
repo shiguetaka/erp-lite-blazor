@@ -52,8 +52,8 @@ public class ProdutoService : IProdutoService
         {
             Nome = produto.Nome,
             Descricao = produto.Descricao,
-            Preco = produto.Preco,
-            Estoque = produto.Estoque
+            Preco = produto.Preco ?? 0,
+            Estoque = produto.Estoque ?? 0
         };
 
         await _repository.AddAsync(entity);
@@ -72,8 +72,8 @@ public class ProdutoService : IProdutoService
             
         entity.Nome = produto.Nome;
         entity.Descricao = produto.Descricao;
-        entity.Preco = produto.Preco;
-        entity.Estoque = produto.Estoque;
+        entity.Preco = produto.Preco ?? 0;
+        entity.Estoque = produto.Estoque ?? 0;  
         
         await _repository.UpdateAsync(entity);
     }

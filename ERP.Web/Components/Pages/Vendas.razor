@@ -11,33 +11,37 @@
 
 <h3>Vendas</h3>
 
-<select class="form-control"
-        @bind="novaVenda.ClienteId">
+<div class="mb-3">
+    <select class="form-control"
+            @bind="novaVenda.ClienteId">
 
-    <option value="">Selecione o cliente</option>
+        <option value="">Selecione o cliente</option>
 
-    @foreach(var cliente in clientes)
-    {
-        <option value="@cliente.Id">
-            @cliente.Nome
-        </option>
-    }
+        @foreach(var cliente in clientes)
+        {
+            <option value="@cliente.Id">
+                @cliente.Nome
+            </option>
+        }
 
-</select>
+    </select>
+</div>
 
-<select class="form-control"
-        @onchange="ProdutoSelecionado">
+<div class="mb-3">
+    <select class="form-control"
+            @onchange="ProdutoSelecionado">
 
-    <option value="">Selecione o produto</option>
+        <option value="">Selecione o produto</option>
 
-    @foreach(var produto in produtos)
-    {
-        <option value="@produto.Id">
-            @produto.Nome
-        </option>
-    }
+        @foreach(var produto in produtos)
+        {
+            <option value="@produto.Id">
+                @produto.Nome
+            </option>
+        }
 
-</select>
+    </select>
+</div>
 
 <div class="mb-3">
     <input class="form-control"
@@ -55,9 +59,17 @@
 
 <div class="mb-3">
     <input class="form-control"
-           value="@(novaVenda.Quantidade * novaVenda.ValorUnitario)"
+           placeholder="Total"
+           value="@CalcularTotal()"
            readonly />
 </div>
+
+@if(!string.IsNullOrEmpty(mensagemErro))
+{
+    <div class="alert alert-danger">
+        @mensagemErro
+    </div>
+}
 
 <button class="btn btn-primary"
         @onclick="Salvar">
@@ -70,6 +82,7 @@
 }
 else
 {
+
 <table class="table mt-4">
 <thead>
 <tr>
@@ -81,16 +94,19 @@ else
 <th></th>
 </tr>
 </thead>
+
 <tbody>
 
 @foreach(var venda in vendas)
 {
+
 <tr>
 <td>@venda.ClienteNome</td>
 <td>@venda.ProdutoNome</td>
 <td>@venda.Quantidade</td>
 <td>@venda.ValorUnitario</td>
 <td>@venda.DataVenda</td>
+
 <td>
 
 <button class="btn btn-warning btn-sm me-2"
@@ -104,48 +120,78 @@ Excluir
 </button>
 
 </td>
+
 </tr>
+
 }
 
 </tbody>
+
 </table>
+
 }
 
 @code {
+    private List<ClienteDto> clientes = new();
+    private List<ProdutoDto> produtos = new();
+    private List<VendaDto>? vendas;
+    private VendaDto novaVenda = new();
+    private bool editando = false;
+    private string mensagemErro = "";
 
-private List<ClienteDto> clientes = new();
-private List<ProdutoDto> produtos = new();
-private List<VendaDto>? vendas;
-private VendaDto novaVenda = new();
-private bool editando = false;
-
-protected override async Task OnInitializedAsync()
-{
-    clientes = await ClienteService.GetClientesAsync();
-    produtos = await ProdutoService.GetProdutosAsync();
-    await CarregarVendas();
-}
-
-private async Task CarregarVendas()
-{
-    vendas = await VendaService.GetVendasAsync();
-}
-
-private async Task ProdutoSelecionado(ChangeEventArgs e)
-{
-    var id = Guid.Parse(e.Value!.ToString()!);
-
-    var produto = produtos.FirstOrDefault(x => x.Id == id);
-
-    if(produto != null)
+    protected override async Task OnInitializedAsync()
     {
-        novaVenda.ProdutoId = produto.Id;
-        novaVenda.ValorUnitario = produto.Preco;
+        clientes = await ClienteService.GetClientesAsync();
+        produtos = await ProdutoService.GetProdutosAsync();
+        await CarregarVendas();
     }
-}
+
+    private async Task CarregarVendas()
+    {
+        vendas = await VendaService.GetVendasAsync();
+    }
+
+    private void ProdutoSelecionado(ChangeEventArgs e)
+    {
+        var id = Guid.Parse(e.Value!.ToString()!);
+
+        var produto = produtos.FirstOrDefault(x => x.Id == id);
+
+        if(produto != null)
+        {
+            novaVenda.ProdutoId = produto.Id;
+            novaVenda.ValorUnitario = produto.Preco;
+        }
+    }
 
 private async Task Salvar()
 {
+    mensagemErro = "";
+
+    if(novaVenda.ClienteId == Guid.Empty)
+    {
+        mensagemErro = "Selecione o cliente.";
+        return;
+    }
+
+    if(novaVenda.ProdutoId == Guid.Empty)
+    {
+        mensagemErro = "Selecione o produto.";
+        return;
+    }
+
+    if(novaVenda.Quantidade == null || novaVenda.Quantidade <= 0)
+    {
+        mensagemErro = "A quantidade deve ser maior que zero.";
+        return;
+    }
+
+    if(novaVenda.ValorUnitario == null || novaVenda.ValorUnitario <= 0)
+    {
+        mensagemErro = "O valor deve ser maior que zero.";
+        return;
+    }
+
     if(editando)
     {
         await VendaService.UpdateAsync(novaVenda);
@@ -162,24 +208,33 @@ private async Task Salvar()
     await CarregarVendas();
 }
 
-private void Editar(VendaDto venda)
-{
-    novaVenda = new VendaDto
+    private void Editar(VendaDto venda)
     {
-        Id = venda.Id,
-        ClienteId = venda.ClienteId,
-        ProdutoId = venda.ProdutoId,
-        Quantidade = venda.Quantidade,
-        ValorUnitario = venda.ValorUnitario,
-        DataVenda = venda.DataVenda
-    };
+        novaVenda = new VendaDto
+        {
+            Id = venda.Id,
+            ClienteId = venda.ClienteId,
+            ProdutoId = venda.ProdutoId,
+            Quantidade = venda.Quantidade,
+            ValorUnitario = venda.ValorUnitario,
+            DataVenda = venda.DataVenda
+        };
 
-    editando = true;
-}
+        editando = true;
+    }
 
-private async Task Excluir(Guid id)
-{
-    await VendaService.DeleteAsync(id);
-    await CarregarVendas();
-}
+    private async Task Excluir(Guid id)
+    {
+        await VendaService.DeleteAsync(id);
+        await CarregarVendas();
+    }
+    private decimal? CalcularTotal()
+    {
+        if(novaVenda.Quantidade == null || novaVenda.ValorUnitario == null)
+        {
+            return null;
+        }
+
+        return novaVenda.Quantidade.Value * novaVenda.ValorUnitario.Value;
+    }
 }

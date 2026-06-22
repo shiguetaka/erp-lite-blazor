@@ -41,7 +41,7 @@ public class VendaRepository : IVendaRepository
         _context.Vendas.Update(venda);
         await _context.SaveChangesAsync();
     }
-
+    
     public async Task DeleteAsync(Venda venda)
     {
         _context.Vendas.Remove(venda);

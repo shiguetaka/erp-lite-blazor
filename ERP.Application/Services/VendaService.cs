@@ -7,10 +7,12 @@ namespace ERP.Application.Services;
 public class VendaService : IVendaService
 {
     private readonly IVendaRepository _repository;
+    private readonly IProdutoRepository _produtoRepository;
 
-    public VendaService(IVendaRepository repository)
+    public VendaService(IVendaRepository repository,IProdutoRepository produtoRepository)
     {
         _repository = repository;
+        _produtoRepository = produtoRepository;
     }
 
     public async Task<List<VendaDto>> GetAllAsync()
@@ -52,13 +54,25 @@ public class VendaService : IVendaService
 
     public async Task<VendaDto> CreateAsync(VendaDto venda)
     {
+        var produto = await _produtoRepository.GetByIdAsync(venda.ProdutoId);
+
+        if(produto == null)
+            throw new Exception("Produto não encontrado");
+
+        if(produto.Estoque < venda.Quantidade)
+            throw new Exception("Estoque insuficiente");
+
+        produto.Estoque -= venda.Quantidade ?? 0;
+
+        await _produtoRepository.UpdateAsync(produto);
+
         var entity = new Domain.Entities.Venda
         {
             ClienteId = venda.ClienteId,
             ProdutoId = venda.ProdutoId,
-            Quantidade = venda.Quantidade,
-            ValorUnitario = venda.ValorUnitario,
-            DataVenda = venda.DataVenda
+            Quantidade = venda.Quantidade ?? 0,
+            ValorUnitario = produto.Preco,
+            DataVenda = DateTime.Now
         };
 
         await _repository.CreateAsync(entity);
@@ -75,8 +89,8 @@ public class VendaService : IVendaService
             Id = venda.Id,
             ClienteId = venda.ClienteId,
             ProdutoId = venda.ProdutoId,
-            Quantidade = venda.Quantidade,
-            ValorUnitario = venda.ValorUnitario,
+            Quantidade = venda.Quantidade ?? 0,
+            ValorUnitario = venda.ValorUnitario ?? 0,
             DataVenda = venda.DataVenda
         };
 

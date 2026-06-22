@@ -20,6 +20,13 @@
     <input class="form-control" placeholder="Telefone" @bind="novoCliente.Telefone" />
 </div>
 
+@if(!string.IsNullOrEmpty(mensagemErro))
+{
+    <div class="alert alert-danger">
+        @mensagemErro
+    </div>
+}
+
 <button class="btn btn-primary" @onclick="Salvar">
     @(editando ? "Salvar Alteração" : "Novo Cliente")
 </button>
@@ -76,6 +83,8 @@ else
     private List<ClienteDto>? clientes;
     private ClienteDto novoCliente = new();
 
+    private string mensagemErro = "";
+
     protected override async Task OnInitializedAsync()
     {
         await CarregarClientes();
@@ -88,7 +97,21 @@ else
 
     private async Task Salvar()
     {
-        if (editando)
+        mensagemErro = "";
+
+        if(string.IsNullOrWhiteSpace(novoCliente.Nome))
+        {
+            mensagemErro = "O nome é obrigatório.";
+            return;
+        }
+
+        if(string.IsNullOrWhiteSpace(novoCliente.Email))
+        {
+            mensagemErro = "O email é obrigatório.";
+            return;
+        }
+
+        if(editando)
         {
             await ClienteService.UpdateAsync(novoCliente);
         }
@@ -96,8 +119,10 @@ else
         {
             await ClienteService.CreateAsync(novoCliente);
         }
-        novoCliente = new();
+
+        novoCliente = new ClienteDto();
         editando = false;
+
         await CarregarClientes();
     }
 
