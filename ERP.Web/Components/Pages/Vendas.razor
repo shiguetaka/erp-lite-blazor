@@ -1,0 +1,185 @@
+@page "/vendas"
+@rendermode InteractiveServer
+
+@inject ClienteApiService ClienteService
+@inject ProdutoApiService ProdutoService
+
+@using ERP.Application.DTOs
+@using ERP.Web.Services
+
+@inject VendaApiService VendaService
+
+<h3>Vendas</h3>
+
+<select class="form-control"
+        @bind="novaVenda.ClienteId">
+
+    <option value="">Selecione o cliente</option>
+
+    @foreach(var cliente in clientes)
+    {
+        <option value="@cliente.Id">
+            @cliente.Nome
+        </option>
+    }
+
+</select>
+
+<select class="form-control"
+        @onchange="ProdutoSelecionado">
+
+    <option value="">Selecione o produto</option>
+
+    @foreach(var produto in produtos)
+    {
+        <option value="@produto.Id">
+            @produto.Nome
+        </option>
+    }
+
+</select>
+
+<div class="mb-3">
+    <input class="form-control"
+           placeholder="Quantidade"
+           type="number"
+           @bind="novaVenda.Quantidade" />
+</div>
+
+<div class="mb-3">
+    <input class="form-control"
+           placeholder="Valor Unitário"
+           type="number"
+           @bind="novaVenda.ValorUnitario" />
+</div>
+
+<div class="mb-3">
+    <input class="form-control"
+           value="@(novaVenda.Quantidade * novaVenda.ValorUnitario)"
+           readonly />
+</div>
+
+<button class="btn btn-primary"
+        @onclick="Salvar">
+    @(editando ? "Salvar Alteração" : "Nova Venda")
+</button>
+
+@if (vendas == null)
+{
+    <p>Carregando...</p>
+}
+else
+{
+<table class="table mt-4">
+<thead>
+<tr>
+<th>Cliente</th>
+<th>Produto</th>
+<th>Quantidade</th>
+<th>Valor</th>
+<th>Data</th>
+<th></th>
+</tr>
+</thead>
+<tbody>
+
+@foreach(var venda in vendas)
+{
+<tr>
+<td>@venda.ClienteNome</td>
+<td>@venda.ProdutoNome</td>
+<td>@venda.Quantidade</td>
+<td>@venda.ValorUnitario</td>
+<td>@venda.DataVenda</td>
+<td>
+
+<button class="btn btn-warning btn-sm me-2"
+        @onclick="() => Editar(venda)">
+Editar
+</button>
+
+<button class="btn btn-danger btn-sm"
+        @onclick="() => Excluir(venda.Id)">
+Excluir
+</button>
+
+</td>
+</tr>
+}
+
+</tbody>
+</table>
+}
+
+@code {
+
+private List<ClienteDto> clientes = new();
+private List<ProdutoDto> produtos = new();
+private List<VendaDto>? vendas;
+private VendaDto novaVenda = new();
+private bool editando = false;
+
+protected override async Task OnInitializedAsync()
+{
+    clientes = await ClienteService.GetClientesAsync();
+    produtos = await ProdutoService.GetProdutosAsync();
+    await CarregarVendas();
+}
+
+private async Task CarregarVendas()
+{
+    vendas = await VendaService.GetVendasAsync();
+}
+
+private async Task ProdutoSelecionado(ChangeEventArgs e)
+{
+    var id = Guid.Parse(e.Value!.ToString()!);
+
+    var produto = produtos.FirstOrDefault(x => x.Id == id);
+
+    if(produto != null)
+    {
+        novaVenda.ProdutoId = produto.Id;
+        novaVenda.ValorUnitario = produto.Preco;
+    }
+}
+
+private async Task Salvar()
+{
+    if(editando)
+    {
+        await VendaService.UpdateAsync(novaVenda);
+    }
+    else
+    {
+        novaVenda.DataVenda = DateTime.Now;
+        await VendaService.CreateAsync(novaVenda);
+    }
+
+    novaVenda = new();
+    editando = false;
+
+    await CarregarVendas();
+}
+
+private void Editar(VendaDto venda)
+{
+    novaVenda = new VendaDto
+    {
+        Id = venda.Id,
+        ClienteId = venda.ClienteId,
+        ProdutoId = venda.ProdutoId,
+        Quantidade = venda.Quantidade,
+        ValorUnitario = venda.ValorUnitario,
+        DataVenda = venda.DataVenda
+    };
+
+    editando = true;
+}
+
+private async Task Excluir(Guid id)
+{
+    await VendaService.DeleteAsync(id);
+    await CarregarVendas();
+}
+}
