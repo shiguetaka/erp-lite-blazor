@@ -29,21 +29,14 @@ public class ProdutoService : IProdutoService
         }).ToList();
     }
 
-    public async Task CreateAsync(ProdutoDto produto)
+    public async Task<ProdutoDto?> GetByIdAsync(Guid id)
     {
-        var entity = new ERP.Domain.Entities.Produto
-        {
-            Nome = produto.Nome,
-            Descricao = produto.Descricao,
-            Preco = produto.Preco,
-            Estoque = produto.Estoque
-        };
-        await _repository.AddAsync(entity);
-    }
+        var produto = await _repository.GetByIdAsync(id);
 
-    public async Task UpdateAsync(ProdutoDto produto)
-    {
-        var entity = new ERP.Domain.Entities.Produto
+        if (produto == null)
+            return null;
+
+        return new ProdutoDto
         {
             Id = produto.Id,
             Nome = produto.Nome,
@@ -51,12 +44,48 @@ public class ProdutoService : IProdutoService
             Preco = produto.Preco,
             Estoque = produto.Estoque
         };
+    }
+
+    public async Task<ProdutoDto> CreateAsync(ProdutoDto produto)
+    {
+        var entity = new Produto
+        {
+            Nome = produto.Nome,
+            Descricao = produto.Descricao,
+            Preco = produto.Preco,
+            Estoque = produto.Estoque
+        };
+
+        await _repository.AddAsync(entity);
+
+        produto.Id = entity.Id;
+
+        return produto;
+    }
+
+    public async Task UpdateAsync(ProdutoDto produto)
+    {
+        var entity = await _repository.GetByIdAsync(produto.Id);
+        
+        if (entity == null)
+            return;
+            
+        entity.Nome = produto.Nome;
+        entity.Descricao = produto.Descricao;
+        entity.Preco = produto.Preco;
+        entity.Estoque = produto.Estoque;
+        
         await _repository.UpdateAsync(entity);
     }
 
     public async Task DeleteAsync(Guid id)
     {
-        await _repository.DeleteAsync(id);
+        var entity = await _repository.GetByIdAsync(id);
+
+        if (entity == null)
+            return;
+
+        await _repository.DeleteAsync(entity);
     }
 
     public async Task<int> CountAsync()

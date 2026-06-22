@@ -16,39 +16,46 @@ public class ProdutosController : ControllerBase
     }
 
     [HttpGet]
-    public async Task<IActionResult> Get()
+    public async Task<ActionResult<List<ProdutoDto>>> Get()
     {
         var produtos = await _service.GetAllAsync();
-
         return Ok(produtos);
     }
 
-    [HttpPost]
-    public async Task<IActionResult> Post(ProdutoDto produto)
+    [HttpGet("{id}")]
+    public async Task<ActionResult<ProdutoDto>> GetById(Guid id)
     {
-        await _service.CreateAsync(produto);
+        var produto = await _service.GetByIdAsync(id);
 
-        return Ok();
+        if (produto == null)
+            return NotFound();
+
+        return Ok(produto);
+    }
+
+    [HttpPost]
+    public async Task<ActionResult<ProdutoDto>> Create(ProdutoDto produto)
+    {
+        var result = await _service.CreateAsync(produto);
+        return Ok(result);
     }
 
     [HttpPut]
-    public async Task<IActionResult> Put(ProdutoDto produto)
+    public async Task<ActionResult> Update(ProdutoDto produto)
     {
         await _service.UpdateAsync(produto);
-
-        return Ok();
+        return Ok(produto);
     }
 
     [HttpDelete("{id}")]
-    public async Task<IActionResult> Delete(Guid id)
+    public async Task<ActionResult> Delete(Guid id)
     {
         await _service.DeleteAsync(id);
-
         return Ok();
     }
 
     [HttpGet("count")]
-    public async Task<IActionResult> Count()
+    public async Task<ActionResult<int>> Count()
     {
         var total = await _service.CountAsync();
         return Ok(total);
